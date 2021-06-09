@@ -15,6 +15,7 @@ namespace SmolBrain {
 		Eigen::Matrix<float, -1, -1> weights;
 		Eigen::Matrix<float, -1, -1> li;
 		Eigen::Matrix<float, -1, -1> z;
+		Eigen::Matrix<float, -1, 1> biases;
 		AFunction::Type fType;
 	protected:
 		int iSize, oSize;

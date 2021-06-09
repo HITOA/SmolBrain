@@ -21,10 +21,12 @@ void SmolBrain::Dense::Initialize()
 {
 	this->weights.resize(oSize, iSize);
 	this->weights.setRandom();
+	this->biases.resize(oSize, 1);
+	this->biases.setConstant(1);
 }
 
 Eigen::Matrix<float, -1, 1> SmolBrain::Dense::Compute(Eigen::Matrix<float, -1, 1> inputs) {
-	Eigen::Matrix<float, -1, 1> outputs = this->weights * inputs;
+	Eigen::Matrix<float, -1, 1> outputs = this->weights * inputs + biases;
 	li = inputs;
 	z = outputs;
 	return SmolBrain::AFunction::Activate(outputs, fType);
