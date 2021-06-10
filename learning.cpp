@@ -1,9 +1,9 @@
 #include "learning.h"
 #include "cfunction.h"
+#include <iostream>
 
 void SmolBrain::SupervisedLearning::Train(BaseModel* model, TrainingDataset* dataset, int epoch, int batchSize, float learningRate) {
-	//_ASSERT(model->InputSize() == dataset->inputs.cols() && model->OutputSize() == dataset->inputs.cols() && dataset->inputs.rows() == dataset->outputs.rows());
-
+	_ASSERT(model->InputSize() == dataset->inputs.cols() && model->OutputSize() == dataset->inputs.cols() && dataset->inputs.rows() == dataset->outputs.rows());
 	std::vector<SmolBrain::SupervisedLearning::Internal::ErrorData> lastBatchErrors;
 
 	for (int i = 0; i < model->layers.size(); i++) {
@@ -16,10 +16,13 @@ void SmolBrain::SupervisedLearning::Train(BaseModel* model, TrainingDataset* dat
 	}
 
 	int dataIndex = 0;
+	int batchIndex = 0;
+	float loss = 0;
+	float acc = 0;
 	for (int nEpoch = 0; nEpoch < epoch;) {
 
 		std::vector<SmolBrain::SupervisedLearning::Internal::ErrorData> batchErrors;
-		float loss = 0;
+		float vr = 0;
 
 		for (int i = 0; i < batchSize; i++) {
 
@@ -29,6 +32,9 @@ void SmolBrain::SupervisedLearning::Train(BaseModel* model, TrainingDataset* dat
 
 			float cost = CFunction::Cost(currentOutputs, expectedOutputs);
 			loss = ((loss * dataIndex) + cost) / (dataIndex + 1);
+
+			if (IsCorrect(currentOutputs, expectedOutputs))
+				vr++;
 
 			std::vector<SmolBrain::SupervisedLearning::Internal::ErrorData> currentError = Sgd(model, currentOutputs, expectedOutputs);
 
@@ -46,7 +52,9 @@ void SmolBrain::SupervisedLearning::Train(BaseModel* model, TrainingDataset* dat
 			dataIndex++;
 		}
 
-		printf("Loss - %f\n", loss);
+		acc = ((acc * batchIndex) + (vr / (float)batchSize)) / ((float)batchIndex + 1);
+
+		std::cout << "\rEpoch : " << nEpoch + 1 << " | Batche - " << dataIndex/batchSize << "/" << dataset->inputs.rows()/batchSize << ", Loss - " << loss << ", Accuracy - " << acc << "            ";
 
 		for (int i = 0; i < batchErrors.size(); i++) {
 			batchErrors[i].weightsErrors += (lastBatchErrors[i].weightsErrors * 0.9);
@@ -56,10 +64,15 @@ void SmolBrain::SupervisedLearning::Train(BaseModel* model, TrainingDataset* dat
 		}
 
 		lastBatchErrors = batchErrors;
+		batchIndex++;
 
 		if (dataIndex >= dataset->inputs.rows()) {
 			nEpoch++;
 			dataIndex = 0;
+			loss = 0;
+			acc = 0;
+			batchIndex = 0;
+			std::cout << std::endl;
 		}
 	}
 
@@ -86,4 +99,25 @@ std::vector<SmolBrain::SupervisedLearning::Internal::ErrorData> SmolBrain::Super
 	}
 
 	return errors;
+}
+
+bool SmolBrain::SupervisedLearning::IsCorrect(Eigen::Matrix<float, -1, 1> a, Eigen::Matrix<float, -1, 1> y)
+{
+	int amax = 0;
+	int ymax = 0;
+	float amaxv = a[0];
+	float ymaxv = y[0];
+
+	for (int i = 0; i < a.rows(); i++) {
+		if (a[i] > amaxv) {
+			amaxv = a[i];
+			amax = i;
+		}
+		if (y[i] > ymaxv) {
+			ymaxv = y[i];
+			ymax = i;
+		}
+	}
+
+	return amax == ymax;
 }

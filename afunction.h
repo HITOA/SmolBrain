@@ -9,7 +9,8 @@ namespace SmolBrain {
 
 		enum class Type {
 			Sigmoid,
-			ReLU
+			ReLU,
+			Tanh
 		};
 
 		template <typename Derived>
@@ -29,6 +30,7 @@ namespace SmolBrain {
 		template <typename Derived>
 		inline typename Derived ReLU(const Eigen::MatrixBase<Derived>& b) {
 			Derived a;
+			a.resize(b.rows(), b.cols());
 
 			for (int i = 0; i < b.cols(); i++) {
 				for (int j = 0; j < b.rows(); j++) {
@@ -40,12 +42,19 @@ namespace SmolBrain {
 		}
 
 		template <typename Derived>
+		inline typename Derived Tanh(const Eigen::MatrixBase<Derived>& b) {
+			return b.array().tanh().matrix();
+		}
+
+		template <typename Derived>
 		inline typename Derived Activate(const Eigen::MatrixBase<Derived>& b, Type fType) {
 			switch (fType) {
 			case Type::Sigmoid:
 				return Sigmoid(b);
 			case Type::ReLU:
 				return ReLU(b);
+			case Type::Tanh:
+				return Tanh(b);
 			default:
 				return b;
 			}
@@ -66,6 +75,7 @@ namespace SmolBrain {
 		template <typename Derived>
 		inline typename Derived DerivativeReLU(const Eigen::MatrixBase<Derived>& b) {
 			Derived a;
+			a.resize(b.rows(), b.cols());
 
 			for (int i = 0; i < b.cols(); i++) {
 				for (int j = 0; j < b.rows(); j++) {
@@ -77,12 +87,19 @@ namespace SmolBrain {
 		}
 
 		template <typename Derived>
+		inline typename Derived DerivativeTanh(const Eigen::MatrixBase<Derived>& b) {
+			return 1 - (b.array().tanh() * b.array().tanh());
+		}
+
+		template <typename Derived>
 		inline typename Derived DerivativeActivate(const Eigen::MatrixBase<Derived>& b, Type fType) {
 			switch (fType) {
 			case Type::Sigmoid:
 				return DerivativeSigmoid(b);
 			case Type::ReLU:
 				return DerivativeReLU(b);
+			case Type::Tanh:
+				return DerivativeTanh(b);
 			default:
 				return b;
 			}
